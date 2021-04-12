@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="receivers">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="receiver" type="receiver_type" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="receiver_type">
+        <xs:sequence>
+            <xs:element name="receiver_id" type="xs:positiveInteger" />
+            <xs:element name="first_name" type="xs:string" />
+            <xs:element name="last_name" type="xs:string" />
+            <xs:element name="file" type="xs:string" />
+            <xs:element name="file_md5" type="xs:string" />
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

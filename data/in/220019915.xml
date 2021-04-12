@@ -1,0 +1,9 @@
+<?xml version = "1.0" encoding = "UTF-8" standalone = "no" ?>
+<receivers>
+    <receiver>
+        <receiver_id>8842</receiver_id>
+        <first_name>Martin</first_name>
+        <last_name>van Nostrand</last_name>
+        <file>220019901.pdf</file>
+        <file_md5>213dcefaeb5d50ceb7de1be998c02032</file_md5>
+    </receiver>

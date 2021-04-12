@@ -1,0 +1,38 @@
+<?xml version = "1.0" encoding = "UTF-8" standalone = "no" ?>
+<receivers>
+    <receiver>
+        <receiver_id>8842</receiver_id>
+        <first_name>John</first_name>
+        <last_name>Smith</last_name>
+        <file>90072657.pdf</file>
+        <file_md5>3ec56d15c9366a5045f5de688867f74a</file_md5>
+    </receiver>
+    <receiver>
+        <receiver_id>11520</receiver_id>
+        <first_name>Jane</first_name>
+        <last_name>Smith</last_name>
+        <file>90072657.pdf</file>
+        <file_md5>3ec56d15c9366a5045f5de688867f74a</file_md5>
+    </receiver>
+    <receiver>
+        <receiver_id>8842</receiver_id>
+        <first_name>John</first_name>
+        <last_name>Smith</last_name>
+        <file>90072658.pdf</file>
+        <file_md5>cd8936779e1601a498533876d149b294</file_md5>
+    </receiver>
+    <receiver>
+        <receiver_id>142994</receiver_id>
+        <first_name>Max</first_name>
+        <last_name>Power</last_name>
+        <file>90072659.pdf</file>
+        <file_md5>329bf2b147d4c7eb1f3e2f0f96e8dd87</file_md5>
+    </receiver>
+    <receiver>
+        <receiver_id>51</receiver_id>
+        <first_name>Rex</first_name>
+        <last_name>Steel</last_name>
+        <file>90072610.pdf</file>
+        <file_md5>e4e242be46aafefe8a1dc473a0070e0e</file_md5>
+    </receiver>
+</receivers>

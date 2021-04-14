@@ -19,23 +19,23 @@ public class Receiver {
         this.hash = hash;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public Integer getId() {
+        return id;
     }
 
-    public void setFirstname(String firstname) {
-        this.firstname = firstname;
+    public String getFirstname() {
+        return firstname;
     }
 
-    public void setLastname(String lastname) {
-        this.lastname = lastname;
+    public String getLastname() {
+        return lastname;
     }
 
-    public void setFile(String file) {
-        this.file = file;
+    public String getFile() {
+        return file;
     }
 
-    public void setHash(String hash) {
-        this.hash = hash;
+    public String getHash() {
+        return hash;
     }
 }

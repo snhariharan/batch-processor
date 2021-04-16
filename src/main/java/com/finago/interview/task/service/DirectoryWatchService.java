@@ -58,7 +58,7 @@ public class DirectoryWatchService {
     /**
      * Process all events for keys queued to the watcher
      */
-    public void processEvents() {
+    public void processEvents() throws IOException {
         for (;;) {
             WatchKey key;
             try {

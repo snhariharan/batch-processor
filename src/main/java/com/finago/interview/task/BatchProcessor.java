@@ -21,7 +21,7 @@ public class BatchProcessor {
         try {
             new DirectoryWatchService(dir).processEvents();
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error while starting to watch directory path: " + dir);
+            logger.log(Level.SEVERE, "Error while serving request: " + dir);
         }
     }
 

@@ -19,21 +19,19 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.util.Comparator.comparing;
-import static java.util.Comparator.comparingInt;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toCollection;
 
 public class FileProcessor {
     final String INPUT_DIRECTORY = "/opt/batch-processor/data/in/";
     final String OUTPUT_DIRECTORY = "/opt/batch-processor/data/out/";
-    final String ERROR_DIRECTORY = "/opt/batch-processor/data/out/";
-    final String ARCHIVE_DIRECTORY = "/opt/batch-processor/data/archive/";
     CreateXMLFile createXMLFile;
     ArrayList<Receiver> receivers;
     Logger logger;
@@ -45,17 +43,21 @@ public class FileProcessor {
     }
 
     public void process(Path path) throws IOException {
-        final String filePath = path.toString();
-        if (filePath.toLowerCase().endsWith(".xml")) {
-            parseXmlAndUpdateReceivers(path);
-            Boolean pdfCheck = checkAllPDF();
-            logger.log(Level.INFO, "files are not corrupt - " + pdfCheck);
-            if (pdfCheck) {
-                moveToDirectory();
-                String newPath = filePath.replace("in", "archive");
-                Files.move(Paths.get(filePath), Paths.get(newPath), StandardCopyOption.REPLACE_EXISTING);
-                deleteProcessedFiles();
+        try {
+            final String filePath = path.toString();
+            if (filePath.toLowerCase().endsWith(".xml")) {
+                parseXmlAndUpdateReceivers(filePath);
+                Boolean pdfCheck = checkAllPDF();
+                logger.log(Level.INFO, "files are not corrupt - " + pdfCheck);
+                if (pdfCheck) {
+                    moveToDirectory();
+                    String newPath = filePath.replace("in", "archive");
+                    Files.move(Paths.get(filePath), Paths.get(newPath), StandardCopyOption.REPLACE_EXISTING);
+                    deleteProcessedFiles();
+                }
             }
+        } catch (ParseException e) {
+            logger.log(Level.WARNING, path.toString() + " file was corrupted");
         }
     }
 
@@ -119,11 +121,11 @@ public class FileProcessor {
         return false;
     }
 
-    private void parseXmlAndUpdateReceivers(Path path) {
+    private void parseXmlAndUpdateReceivers(String path) throws IOException, ParseException {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         try {
             DocumentBuilder db = dbf.newDocumentBuilder();
-            Document doc = db.parse(path.toString());
+            Document doc = db.parse(path);
             doc.getDocumentElement().normalize();
             NodeList list = doc.getElementsByTagName("receiver");
             for (int temp = 0; temp < list.getLength(); temp++) {
@@ -140,9 +142,11 @@ public class FileProcessor {
                     receivers.add(receiver);
                 }
             }
-        } catch (ParserConfigurationException | SAXException | IOException e) {
-            //TODO: Handle exception case.
-            e.printStackTrace();
+        } catch (ParserConfigurationException | SAXException ex) {
+            logger.log(Level.FINE, "file corrupted: " + path);
+            String newPath = path.replace("in", "error");
+            Files.move(Paths.get(path), Paths.get(newPath), StandardCopyOption.REPLACE_EXISTING);
+            throw new ParseException("file corrupted", 0);
         }
     }
 

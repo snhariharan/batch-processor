@@ -33,6 +33,7 @@ public class FileProcessor {
     final String INPUT_DIRECTORY = "/opt/batch-processor/data/in/";
     final String OUTPUT_DIRECTORY = "/opt/batch-processor/data/out/";
     final String ERROR_DIRECTORY = "/opt/batch-processor/data/error/";
+    final String ARCHIVE_DIRECTORY = "/opt/batch-processor/data/archive/";
     CreateXMLFile createXMLFile;
     ArrayList<Receiver> receivers;
     Logger logger;
@@ -44,28 +45,18 @@ public class FileProcessor {
     }
 
     public void process(Path path) throws IOException {
+        final String filePath = path.toString();
         try {
-            final String filePath = path.toString();
             if (filePath.toLowerCase().endsWith(".xml")) {
                 parseXmlAndUpdateReceivers(filePath);
-                Boolean pdfCheck = checkAllPDF();
-                logger.log(Level.INFO, "files are not corrupt - " + pdfCheck);
-                if (pdfCheck) {
-                    moveToDirectory();
-                    String newPath = filePath.replace("in", "archive");
-                    Files.move(Paths.get(filePath), Paths.get(newPath), StandardCopyOption.REPLACE_EXISTING);
-                    deleteProcessedFiles();
-                }
+                moveToDirectory();
+                String newPath = filePath.replace("in", "archive");
+                Files.move(Paths.get(filePath), Paths.get(newPath), StandardCopyOption.REPLACE_EXISTING);
+                deleteProcessedFiles();
             }
         } catch (ParseException e) {
-            logger.log(Level.WARNING, path.toString() + " file was corrupted");
+            logger.log(Level.WARNING, filePath + " file was corrupted");
         }
-    }
-
-    private Boolean checkAllPDF() {
-        return receivers.stream()
-                .map(receiver -> checkPdf(receiver.getFile(), receiver.getHash()))
-                .reduce(Boolean.TRUE, Boolean::logicalAnd);
     }
 
     private void deleteProcessedFiles() {
@@ -84,11 +75,12 @@ public class FileProcessor {
 
     private void moveToDirectory() {
         receivers.forEach(receiver -> {
+            final Boolean isValid = checkPdf(receiver.getFile(), receiver.getHash());
             String receiverId = receiver.getId();
             logger.log(Level.INFO, "Starting to move files for receiver id " + receiverId);
             int innerDirectory = Integer.parseInt(receiverId);
             int outerDirectory = innerDirectory % 100 / innerDirectory;
-            String outputPath = OUTPUT_DIRECTORY + outerDirectory;
+            String outputPath = (isValid ? OUTPUT_DIRECTORY : ARCHIVE_DIRECTORY) + outerDirectory;
             String destinationDirectory = outputPath + '/' + innerDirectory;
             createDirectory(outputPath);
             createDirectory(destinationDirectory);
@@ -119,7 +111,7 @@ public class FileProcessor {
             logger.log(Level.INFO, fileName + " checksum did match with hash value: " + check);
             return check;
         } catch (NoSuchAlgorithmException | IOException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Unable to check if the " + fileName + " is corrupt");
         }
         return false;
     }
@@ -159,7 +151,7 @@ public class FileProcessor {
         int bytesCount;
         while ((bytesCount = fis.read(byteArray)) != -1) {
             digest.update(byteArray, 0, bytesCount);
-        };
+        }
         fis.close();
         byte[] bytes = digest.digest();
         StringBuilder sb = new StringBuilder();

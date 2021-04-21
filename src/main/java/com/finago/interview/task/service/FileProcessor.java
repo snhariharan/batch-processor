@@ -32,6 +32,7 @@ import static java.util.stream.Collectors.toCollection;
 public class FileProcessor {
     final String INPUT_DIRECTORY = "/opt/batch-processor/data/in/";
     final String OUTPUT_DIRECTORY = "/opt/batch-processor/data/out/";
+    final String ERROR_DIRECTORY = "/opt/batch-processor/data/error/";
     CreateXMLFile createXMLFile;
     ArrayList<Receiver> receivers;
     Logger logger;
@@ -87,18 +88,20 @@ public class FileProcessor {
             logger.log(Level.INFO, "Starting to move files for receiver id " + receiverId);
             int innerDirectory = Integer.parseInt(receiverId);
             int outerDirectory = innerDirectory % 100 / innerDirectory;
-            final String outputPath = OUTPUT_DIRECTORY + outerDirectory;
-            final String destinationDirectory = outputPath + '/' + innerDirectory;
+            String outputPath = OUTPUT_DIRECTORY + outerDirectory;
+            String destinationDirectory = outputPath + '/' + innerDirectory;
             createDirectory(outputPath);
             createDirectory(destinationDirectory);
             final String fileName = receiver.getFile();
             final String inputPath = INPUT_DIRECTORY + fileName;
             try {
                 Files.copy(Paths.get(inputPath), Paths.get(destinationDirectory + '/' + fileName), StandardCopyOption.REPLACE_EXISTING);
-                createXMLFile.createFile(receiver, destinationDirectory);
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.log(Level.WARNING, "pdf file " + fileName + " missing");
+                outputPath = ERROR_DIRECTORY + outerDirectory;
+                destinationDirectory = outputPath + '/' + innerDirectory;
             }
+            createXMLFile.createFile(receiver, destinationDirectory);
         });
     }
 

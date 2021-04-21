@@ -20,38 +20,72 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.comparingInt;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toCollection;
 
 public class FileProcessor {
     final String INPUT_DIRECTORY = "/opt/batch-processor/data/in/";
     final String OUTPUT_DIRECTORY = "/opt/batch-processor/data/out/";
     final String ERROR_DIRECTORY = "/opt/batch-processor/data/out/";
     final String ARCHIVE_DIRECTORY = "/opt/batch-processor/data/archive/";
-    ArrayList<Receiver> receivers = new ArrayList<>();
-    Logger logger = Logger.getLogger(FileProcessor.class.getName());
+    CreateXMLFile createXMLFile;
+    ArrayList<Receiver> receivers;
+    Logger logger;
+
+    public FileProcessor() {
+        createXMLFile = new CreateXMLFile();
+        receivers = new ArrayList<>();
+        logger = Logger.getLogger(FileProcessor.class.getName());
+    }
 
     public void process(Path path) throws IOException {
         final String filePath = path.toString();
         if (filePath.toLowerCase().endsWith(".xml")) {
             parseXmlAndUpdateReceivers(path);
-            Boolean pdfCheck = receivers.stream()
-                    .map(receiver -> checkPdf(receiver.getFile(), receiver.getHash()))
-                    .reduce(Boolean.TRUE, Boolean::logicalAnd);
+            Boolean pdfCheck = checkAllPDF();
             logger.log(Level.INFO, "files are not corrupt - " + pdfCheck);
             if (pdfCheck) {
-                moveToDirectory(OUTPUT_DIRECTORY);
+                moveToDirectory();
                 String newPath = filePath.replace("in", "archive");
                 Files.move(Paths.get(filePath), Paths.get(newPath), StandardCopyOption.REPLACE_EXISTING);
+                deleteProcessedFiles();
             }
         }
     }
 
-    private void moveToDirectory(String outDirectory) {
+    private Boolean checkAllPDF() {
+        return receivers.stream()
+                .map(receiver -> checkPdf(receiver.getFile(), receiver.getHash()))
+                .reduce(Boolean.TRUE, Boolean::logicalAnd);
+    }
+
+    private void deleteProcessedFiles() {
+        receivers.stream()
+                .collect(collectingAndThen(toCollection(() -> new TreeSet<>(comparing(Receiver::getFile))), ArrayList::new))
+                .forEach(receiver -> {
+                    final String fileName = receiver.getFile();
+                    final String inputPath = INPUT_DIRECTORY + fileName;
+                    try {
+                        Files.delete(Paths.get(inputPath));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+    }
+
+    private void moveToDirectory() {
         receivers.forEach(receiver -> {
-            Integer innerDirectory = receiver.getId();
+            String receiverId = receiver.getId();
+            logger.log(Level.INFO, "Starting to move files for receiver id " + receiverId);
+            int innerDirectory = Integer.parseInt(receiverId);
             int outerDirectory = innerDirectory % 100 / innerDirectory;
-            final String outputPath = outDirectory + outerDirectory;
+            final String outputPath = OUTPUT_DIRECTORY + outerDirectory;
             final String destinationDirectory = outputPath + '/' + innerDirectory;
             createDirectory(outputPath);
             createDirectory(destinationDirectory);
@@ -59,7 +93,7 @@ public class FileProcessor {
             final String inputPath = INPUT_DIRECTORY + fileName;
             try {
                 Files.copy(Paths.get(inputPath), Paths.get(destinationDirectory + '/' + fileName), StandardCopyOption.REPLACE_EXISTING);
-                Files.delete(Paths.get(inputPath));
+                createXMLFile.createFile(receiver, destinationDirectory);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -76,8 +110,9 @@ public class FileProcessor {
             File file = new File(INPUT_DIRECTORY + fileName);
             MessageDigest md5Digest = MessageDigest.getInstance("MD5");
             String checksum = getFileChecksum(md5Digest, file);
-            System.out.println(checksum + " - " + hash + " : " + checksum.equals(hash));
-            return checksum.equals(hash);
+            boolean check = checksum.equals(hash);
+            logger.log(Level.INFO, fileName + " checksum did match with hash value: " + check);
+            return check;
         } catch (NoSuchAlgorithmException | IOException e) {
             e.printStackTrace();
         }
@@ -114,7 +149,7 @@ public class FileProcessor {
     private static String getFileChecksum(MessageDigest digest, File file) throws IOException {
         FileInputStream fis = new FileInputStream(file);
         byte[] byteArray = new byte[1024];
-        int bytesCount = 0;
+        int bytesCount;
         while ((bytesCount = fis.read(byteArray)) != -1) {
             digest.update(byteArray, 0, bytesCount);
         };

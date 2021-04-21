@@ -19,8 +19,8 @@ public class Receiver {
         this.hash = hash;
     }
 
-    public Integer getId() {
-        return id;
+    public String getId() {
+        return String.valueOf(id);
     }
 
     public String getFirstname() {

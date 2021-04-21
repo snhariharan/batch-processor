@@ -16,7 +16,6 @@ public class BatchProcessor {
     static Logger logger = Logger.getLogger(BatchProcessor.class.getName());
 
     public static void main(String[] args) {
-        logger.log(Level.INFO, "*beep boop* ...processing data... *beep boop*");
         Path dir = Paths.get("/opt/batch-processor/data/in");
         try {
             new DirectoryWatchService(dir).processEvents();

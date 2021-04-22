@@ -16,7 +16,7 @@ public class BatchProcessor {
     static Logger logger = Logger.getLogger(BatchProcessor.class.getName());
 
     public static void main(String[] args) {
-        Path dir = Paths.get("/opt/batch-processor/data/in");
+        String dir  = "/opt/batch-processor/data/";
         try {
             new DirectoryWatchService(dir).processEvents();
         } catch (IOException e) {

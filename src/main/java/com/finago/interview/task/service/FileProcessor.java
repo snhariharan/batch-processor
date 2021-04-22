@@ -30,18 +30,22 @@ import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toCollection;
 
 public class FileProcessor {
-    final String INPUT_DIRECTORY = "/opt/batch-processor/data/in/";
-    final String OUTPUT_DIRECTORY = "/opt/batch-processor/data/out/";
-    final String ERROR_DIRECTORY = "/opt/batch-processor/data/error/";
-    final String ARCHIVE_DIRECTORY = "/opt/batch-processor/data/archive/";
+    final String INPUT_DIRECTORY;
+    final String OUTPUT_DIRECTORY;
+    final String ERROR_DIRECTORY;
+    final String rootDirectory;
     CreateXMLFile createXMLFile;
     ArrayList<Receiver> receivers;
     Logger logger;
 
-    public FileProcessor() {
+    public FileProcessor(String rootDirectory) {
+        this.rootDirectory = rootDirectory;
         createXMLFile = new CreateXMLFile();
         receivers = new ArrayList<>();
         logger = Logger.getLogger(FileProcessor.class.getName());
+        INPUT_DIRECTORY = rootDirectory + "in/";
+        OUTPUT_DIRECTORY = rootDirectory + "out/";
+        ERROR_DIRECTORY = rootDirectory + "error/";
     }
 
     public void process(Path path) throws IOException {

@@ -13,11 +13,15 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class CreateXMLFile {
-   public void createFile(Receiver receiver, String directoryPath) {
-       String xmlFilePath = directoryPath + "/" + receiver.getFile().replace(".pdf", ".xml");
-       try {
+    Logger logger = Logger.getLogger(CreateXMLFile.class.getName());
+
+    public void createFile(Receiver receiver, String directoryPath) {
+        String xmlFilePath = directoryPath + "/" + receiver.getFile().replace(".pdf", ".xml");
+        try {
             DocumentBuilderFactory documentFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder documentBuilder = documentFactory.newDocumentBuilder();
 
@@ -37,10 +41,10 @@ public class CreateXMLFile {
             DOMSource domSource = new DOMSource(document);
             StreamResult streamResult = new StreamResult(new File(xmlFilePath));
             transformer.transform(domSource, streamResult);
-        } catch (ParserConfigurationException | TransformerException pce) {
-            pce.printStackTrace();
+        } catch (ParserConfigurationException | TransformerException e) {
+            logger.log(Level.SEVERE, "Error while creating xml file " + xmlFilePath);
         }
-   }
+    }
 
     private void addChildNode(Document document, Element receiverNode, String nodeName, String nodeValue) {
         Element receiverId = document.createElement(nodeName);

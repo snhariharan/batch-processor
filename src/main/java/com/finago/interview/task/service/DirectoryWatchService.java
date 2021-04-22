@@ -3,14 +3,7 @@ package com.finago.interview.task.service;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,9 +14,12 @@ public class DirectoryWatchService {
 
     private final WatchService watcher;
     private final Map<WatchKey, Path> keys;
+    private final String rootDirectory;
     Logger logger = Logger.getLogger(DirectoryWatchService.class.getName());
 
-    public DirectoryWatchService(Path dir) throws IOException {
+    public DirectoryWatchService(String rootDirectory) throws IOException {
+        this.rootDirectory = rootDirectory;
+        Path dir = Paths.get(rootDirectory + "in/");
         this.watcher = FileSystems.getDefault().newWatchService();
         this.keys = new HashMap<>();
         walkAndRegisterDirectories(dir);
@@ -64,7 +60,7 @@ public class DirectoryWatchService {
                     Path path = dir.resolve(name);
                     logger.log(Level.INFO, event.kind().name() + ": " + path + "\n");
                     if (kind == ENTRY_CREATE) {
-                        FileProcessor fileProcessor = new FileProcessor();
+                        FileProcessor fileProcessor = new FileProcessor(rootDirectory);
                         fileProcessor.process(path);
                     }
                 }

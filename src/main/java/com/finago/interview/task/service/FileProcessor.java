@@ -54,7 +54,7 @@ public class FileProcessor {
             if (filePath.toLowerCase().endsWith(".xml")) {
                 parseXmlAndUpdateReceivers(filePath);
                 moveToDirectory();
-                String newPath = filePath.replace("in", "archive");
+                String newPath = filePath.replace("/in/", "/archive/");
                 Files.move(Paths.get(filePath), Paths.get(newPath), StandardCopyOption.REPLACE_EXISTING);
                 deleteProcessedFiles();
             }
@@ -86,7 +86,7 @@ public class FileProcessor {
             }
         } catch (ParserConfigurationException | SAXException ex) {
             logger.log(Level.FINE, "file corrupted: " + path);
-            String newPath = path.replace("in", "error");
+            String newPath = path.replace("/in/", "/error/");
             Files.move(Paths.get(path), Paths.get(newPath), StandardCopyOption.REPLACE_EXISTING);
             throw new ParseException("file corrupted", 0);
         }

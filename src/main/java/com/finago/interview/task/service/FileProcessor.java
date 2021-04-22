@@ -59,63 +59,6 @@ public class FileProcessor {
         }
     }
 
-    private void deleteProcessedFiles() {
-        receivers.stream()
-                .collect(collectingAndThen(toCollection(() -> new TreeSet<>(comparing(Receiver::getFile))), ArrayList::new))
-                .forEach(receiver -> {
-                    final String fileName = receiver.getFile();
-                    final String inputPath = INPUT_DIRECTORY + fileName;
-                    try {
-                        Files.delete(Paths.get(inputPath));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-    }
-
-    private void moveToDirectory() {
-        receivers.forEach(receiver -> {
-            final Boolean isValid = checkPdf(receiver.getFile(), receiver.getHash());
-            String receiverId = receiver.getId();
-            logger.log(Level.INFO, "Starting to move files for receiver id " + receiverId);
-            int innerDirectory = Integer.parseInt(receiverId);
-            int outerDirectory = innerDirectory % 100 / innerDirectory;
-            String outputPath = (isValid ? OUTPUT_DIRECTORY : ARCHIVE_DIRECTORY) + outerDirectory;
-            String destinationDirectory = outputPath + '/' + innerDirectory;
-            createDirectory(outputPath);
-            createDirectory(destinationDirectory);
-            final String fileName = receiver.getFile();
-            final String inputPath = INPUT_DIRECTORY + fileName;
-            try {
-                Files.copy(Paths.get(inputPath), Paths.get(destinationDirectory + '/' + fileName), StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                logger.log(Level.WARNING, "pdf file " + fileName + " missing");
-                outputPath = ERROR_DIRECTORY + outerDirectory;
-                destinationDirectory = outputPath + '/' + innerDirectory;
-            }
-            createXMLFile.createFile(receiver, destinationDirectory);
-        });
-    }
-
-    private boolean createDirectory(String path) {
-        File file = new File(path);
-        return file.mkdir();
-    }
-
-    private Boolean checkPdf(String fileName, String hash) {
-        try {
-            File file = new File(INPUT_DIRECTORY + fileName);
-            MessageDigest md5Digest = MessageDigest.getInstance("MD5");
-            String checksum = getFileChecksum(md5Digest, file);
-            boolean check = checksum.equals(hash);
-            logger.log(Level.INFO, fileName + " checksum did match with hash value: " + check);
-            return check;
-        } catch (NoSuchAlgorithmException | IOException e) {
-            logger.log(Level.SEVERE, "Unable to check if the " + fileName + " is corrupt");
-        }
-        return false;
-    }
-
     private void parseXmlAndUpdateReceivers(String path) throws IOException, ParseException {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         try {
@@ -143,6 +86,63 @@ public class FileProcessor {
             Files.move(Paths.get(path), Paths.get(newPath), StandardCopyOption.REPLACE_EXISTING);
             throw new ParseException("file corrupted", 0);
         }
+    }
+
+    private void moveToDirectory() {
+        receivers.forEach(receiver -> {
+            final Boolean isValid = checkPdf(receiver.getFile(), receiver.getHash());
+            String receiverId = receiver.getId();
+            logger.log(Level.INFO, "Starting to move files for receiver id " + receiverId);
+            int innerDirectory = Integer.parseInt(receiverId);
+            int outerDirectory = innerDirectory % 100 / innerDirectory;
+            String outputPath = (isValid ? OUTPUT_DIRECTORY : ERROR_DIRECTORY) + outerDirectory;
+            String destinationDirectory = outputPath + '/' + innerDirectory;
+            createDirectory(outputPath);
+            createDirectory(destinationDirectory);
+            final String fileName = receiver.getFile();
+            final String inputPath = INPUT_DIRECTORY + fileName;
+            try {
+                Files.copy(Paths.get(inputPath), Paths.get(destinationDirectory + '/' + fileName), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "pdf file " + fileName + " missing");
+                outputPath = ERROR_DIRECTORY + outerDirectory;
+                destinationDirectory = outputPath + '/' + innerDirectory;
+            }
+            createXMLFile.createFile(receiver, destinationDirectory);
+        });
+    }
+
+    private void deleteProcessedFiles() {
+        receivers.stream()
+                .collect(collectingAndThen(toCollection(() -> new TreeSet<>(comparing(Receiver::getFile))), ArrayList::new))
+                .forEach(receiver -> {
+                    final String fileName = receiver.getFile();
+                    final String inputPath = INPUT_DIRECTORY + fileName;
+                    try {
+                        Files.delete(Paths.get(inputPath));
+                    } catch (IOException e) {
+                        logger.log(Level.SEVERE, "Unable to delete processed file: " + fileName);
+                    }
+                });
+    }
+
+    private Boolean checkPdf(String fileName, String hash) {
+        try {
+            File file = new File(INPUT_DIRECTORY + fileName);
+            MessageDigest md5Digest = MessageDigest.getInstance("MD5");
+            String checksum = getFileChecksum(md5Digest, file);
+            boolean check = checksum.equals(hash);
+            logger.log(Level.INFO, fileName + " checksum did match with hash value: " + check);
+            return check;
+        } catch (NoSuchAlgorithmException | IOException e) {
+            logger.log(Level.SEVERE, "Unable to check if the " + fileName + " is corrupt");
+        }
+        return false;
+    }
+
+    private boolean createDirectory(String path) {
+        File file = new File(path);
+        return file.mkdir();
     }
 
     private static String getFileChecksum(MessageDigest digest, File file) throws IOException {
